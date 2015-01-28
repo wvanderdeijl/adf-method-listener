@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html>
+<f:view xmlns:f="http://java.sun.com/jsf/core" xmlns:af="http://xmlns.oracle.com/adf/faces/rich"
+        xmlns:rh="http://www.redheap.com/rh">
+    <af:document title="tester.jsf" id="d1">
+        <af:form id="f1">
+            <af:button text="button 1" id="b1">
+                <rh:methodListener method="#{backingBeanScope.myBean.methodOne}" type="action"/>
+                <rh:methodListener method="#{backingBeanScope.myBean.methodTwo}" type="action"/>
+                <rh:methodListener method="#{backingBeanScope.myBean.methodThree}" type="action"/>
+            </af:button>
+            <af:button text="show dialog" id="b2">
+                <af:showPopupBehavior popupId="p1" triggerType="action"/>
+            </af:button>
+            <af:popup id="p1">
+                <af:dialog id="d2" title="Dialog">
+                    <rh:methodListener method="#{backingBeanScope.myBean.methodOne}" type="dialog"/>
+                    <rh:methodListener method="#{backingBeanScope.myBean.methodTwo}" type="dialog"/>
+                    <af:outputText value="dialog" id="ot1"/>
+                </af:dialog>
+            </af:popup>
+        </af:form>
+    </af:document>
+</f:view>
