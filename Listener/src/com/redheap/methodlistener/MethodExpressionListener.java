@@ -12,22 +12,20 @@ import org.apache.myfaces.trinidad.bean.FacesBean;
 import org.apache.myfaces.trinidad.bean.FacesBeanImpl;
 import org.apache.myfaces.trinidad.bean.PropertyKey;
 
-public class MethodListener extends BasePolytypeListener {
+public class MethodExpressionListener extends BasePolytypeListener {
 
     public static final FacesBean.Type TYPE = new FacesBean.Type();
     public static final PropertyKey METHOD_KEY = TYPE.registerKey("method", MethodExpression.class);
 
-    private static final ADFLogger logger = ADFLogger.createADFLogger(MethodListener.class);
+    private static final ADFLogger logger = ADFLogger.createADFLogger(MethodExpressionListener.class);
 
-    /**
-     * Listener state holder
-     */
+    // Listener state holder with support for saveState and restoreState
     private FacesBean bean;
 
     /**
      * The no-args constructor default type is {@link BasePolytypeListener.EventType#ACTION}.
      */
-    public MethodListener() {
+    public MethodExpressionListener() {
         super(BasePolytypeListener.EventType.ACTION);
     }
 
@@ -37,7 +35,7 @@ public class MethodListener extends BasePolytypeListener {
      * @param eventType framework concrete event
      * @throws IllegalArgumentException eventType cannot be null
      */
-    public MethodListener(BasePolytypeListener.EventType eventType) {
+    public MethodExpressionListener(BasePolytypeListener.EventType eventType) {
         super(eventType);
     }
 
@@ -63,20 +61,17 @@ public class MethodListener extends BasePolytypeListener {
     }
 
     /**
-     * Invoked from the super class with the event matches the target
-     * {@link BasePolytypeListener.EventType}. Delegates on to a common handler that assigns the "to"
-     * to the "from" value.
-     *
+     * Invoked from the super class with the event matches the target {@link BasePolytypeListener.EventType}.
+     * Delegates event handling to the methodExpression supplied to {@link #setMethodExpression}
      * @param event target faces event
      */
     @Override
     protected void handleEvent(FacesEvent event) {
-        System.out.println(getClass().getName() + ".handleEvent: " + event);
-        MethodExpression expression = getMethodExpression();
+        final MethodExpression expression = getMethodExpression();
         try {
             expression.invoke(FacesContext.getCurrentInstance().getELContext(), new Object[] { event });
         } catch (RuntimeException e) {
-            logger.warning("error invoking ActionListener " + getMethodExpression().getExpressionString(), e);
+            logger.warning("error invoking ActionListener " + expression.getExpressionString(), e);
             throw e;
         }
     }

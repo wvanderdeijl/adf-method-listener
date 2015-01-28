@@ -4,8 +4,8 @@
                 version="2.0" xmlns="http://java.sun.com/xml/ns/javaee">
     <namespace>http://www.redheap.com/rh</namespace>
     <tag>
-        <tag-name>methodListener</tag-name>
-        <handler-class>com.redheap.methodlistener.MethodListenerHandler</handler-class>
+        <tag-name>methodExpressionListener</tag-name>
+        <handler-class>com.redheap.methodlistener.MethodExpressionListenerHandler</handler-class>
         <!-- need to list all attributes here for editor (and code completion) in JDeveloper -->
         <attribute>
             <name>method</name>
@@ -19,7 +19,8 @@
                 the event type to listen for. The legal values are: action,  calendar, calendarActivity,
                 calendarActivityDurationChange, calendarDisplayChange, contextInfo, dialog, disclosure, focus, item, launch,
                 launchPopup, poll, popupFetch,  query, queryOperation, rangeChange, regionNavigation,
-                return, returnPopupData, returnPopup, rowDisclosure, selection, sort, and valueChange.
+                return, returnPopupData, returnPopup, rowDisclosure, selection, sort, and valueChange or
+                any other event type supportd by oracle.adf.view.rich.event.BasePolytypeListener
             </description>
             <name>type</name>
             <required>true</required>

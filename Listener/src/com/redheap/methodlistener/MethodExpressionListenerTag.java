@@ -12,7 +12,7 @@ import oracle.adf.view.rich.event.BasePolytypeListener;
 
 import org.apache.myfaces.trinidad.webapp.TrinidadTagSupport;
 
-public class MethodListenerTag extends TrinidadTagSupport {
+public class MethodExpressionListenerTag extends TrinidadTagSupport {
 
     private MethodExpression method;
     private String type;
@@ -24,7 +24,7 @@ public class MethodListenerTag extends TrinidadTagSupport {
     }
 
     public void setType(String type) {
-        BasePolytypeListener.EventType t = MethodListener.findEventType(type);
+        BasePolytypeListener.EventType t = MethodExpressionListener.findEventType(type);
         if (t != null) {
             this.type = type;
             this.eventType = t;
@@ -48,11 +48,11 @@ public class MethodListenerTag extends TrinidadTagSupport {
 
         UIComponent component = tag.getComponentInstance();
         // create the listener and add it to the parent component
-        MethodListener listener = new MethodListener(eventType);
+        MethodExpressionListener listener = new MethodExpressionListener(eventType);
         if (method != null) {
             listener.setMethodExpression(method);
         }
-        if (!MethodListener.addListener(listener, component)) {
+        if (!MethodExpressionListener.addListener(listener, component)) {
             throw new FaceletException("Failed to add listener to parent for type: " + eventType);
         }
         return super.doStartTag();
