@@ -8,9 +8,19 @@ This JSF/ADF component allows for multiple listeners on a component that each ex
   <rh:methodExpressionListener method="#{backingBeanScope.myBean.methodThree}" type="action"/>
 </af:button>
 ```
+rh:methodExpressionListener is similar to the built-in af:setPropertyListener or any other of the ADF listeners. The key difference is that this methodExpressionListener executes an EL method expression instead of some pre-defined action. This allows for maximum flexibility and can make it very clear in the JSF page that a button performs multiple actions instead of hiding that in a single actionListener with multiple responsibilities in that single listener
 
-## Invoking ADF Model operation bindings from page definition
-It is similar to the built-in af:setPropertyListener or any other of the ADF listeners. The key difference is that this methodExpressionListener executes an EL method expression that could point to managed beans or operation bindings from the page definition. This makes it also possible to execute multiple ADFm actions:
+## Combining with built-in ADF listeners
+The methodExpressionListener can also be combined with the built-in ADF listeners:
+```xml
+<af:button text="Multi Action" id="b1">
+  <af:setPropertyListener from="xxx" to="#{backingBeanScope.myBean.someProperty}" type="action"/>
+  <rh:methodExpressionListener method="#{backingBeanScope.myBean.methodOne}"      type="action"/>
+</af:button>
+```
+
+## Invoking ADF Model operation bindings
+rh:methodExpressionListener can also execute operation binings from the page definition. This makes it possible to execute multiple ADFm actions:
 ```xml
 <af:button text="Multi ADFm" id="b2">
   <!-- create new rol in a datacontrol collection -->
@@ -19,15 +29,6 @@ It is similar to the built-in af:setPropertyListener or any other of the ADF lis
   <rh:methodExpressionListener method="#{bindings.Next.execute}"        type="action"/>
   <!-- execute method exposed on a datacontrol object -->
   <rh:methodExpressionListener method="#{bindings.doSomething.execute}" type="action"/>
-</af:button>
-```
-
-## Combining with built-in ADF listeners
-The methodExpressionListener can also be combined with the build-in ADF listeners:
-```xml
-<af:button text="Multi Action" id="b1">
-  <af:setPropertyListener from="xxx" to="#{backingBeanScope.myBean.someProperty}" type="action"/>
-  <rh:methodExpressionListener method="#{backingBeanScope.myBean.methodOne}"      type="action"/>
 </af:button>
 ```
 
@@ -46,10 +47,11 @@ Since MethodExpressionListener extends from [oracle.adf.view.rich.event.BasePoly
 Basically for `type=anyEvent` to work the JSF component the listener is trying to attach to has to have a `public void addAnyEventListener(AnyEventListener)` method. This is also a way to determine the appropriate value for the `type` attribute of the `rh:methodExpressionListener` tag. If the JSF component has a `public void addSomeOtherEventListener(SomeOtherEvent)` method, you know to use `type=someOther`
 
 ## Supported methods
-The expression from the `method` attribute has to point to a method accepting a single appropriate FacesEvent subclass like `method="#{myBean.clickedButton}"` pointing to `public void clickedButton(ActionEvent event)` in MyBean. Alternatively it can also point to a method accepting no argument as all, such as with `#{bindings.Create.execute}`.
+The expression from the `method` attribute has to point to a method accepting a single appropriate FacesEvent subclass like `method="#{myBean.clickedButton}"` pointing to MyBean's `public void clickedButton(ActionEvent event)` method. Alternatively it can also point to a method accepting no argument as all, such as with `#{bindings.Create.execute}`.
 
 ## Exception handing
-rh:methodExpressionListener will throw a `javax.faces.event.AbortProcessingException` Whenever an exception occurs during execution of the MethodExpression which will abort any other pending listeners. This includes invocation of ADF Model methods that don't throw an exception themselves but report them to the BindingContainer. For example
+rh:methodExpressionListener will throw a `javax.faces.event.AbortProcessingException` Whenever an exception occurs during execution of the MethodExpression. This aborts any other pending listeners. 
+It will also throw this AbortProcessingException if it invokes an ADF Model methodthat don't throw an exception themselves but report them to the BindingContainer. For example
 ```xml
 <af:button text="Multi Action" id="b1">
   <rh:methodExpressionListener method="#{bindings.Delete.execute}" type="action"/>
