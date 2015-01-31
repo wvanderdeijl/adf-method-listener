@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Application xmlns="http://xmlns.oracle.com/adfm/application" version="12.1.3.10.8" id="DataBindings"
+             SeparateXMLFiles="false" Package="com.redheap.multiaction" ClientType="Generic">
+  <pageMap>
+    <page path="/tester.jsf" usageId="com_redheap_multiaction_testerPageDef"/>
+  </pageMap>
+  <pageDefinitionUsages>
+    <page id="com_redheap_multiaction_testerPageDef" path="com.redheap.multiaction.pageDefs.testerPageDef"/>
+  </pageDefinitionUsages>
+  <dataControlUsages>
+    <dc id="MyDataControl" path="com.redheap.multiaction.MyDataControl"/>
+  </dataControlUsages>
+</Application>

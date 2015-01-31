@@ -31,7 +31,7 @@ public class MethodExpressionListenerTag extends TrinidadTagSupport {
             return;
         }
         // the type is not valid, throw exception
-        throw new IllegalArgumentException("invalid type attribute for ActionListener");
+        throw new IllegalArgumentException("Unable to find FacesEvent for type attribute " + type);
     }
 
     @Override
@@ -50,10 +50,10 @@ public class MethodExpressionListenerTag extends TrinidadTagSupport {
         // create the listener and add it to the parent component
         MethodExpressionListener listener = new MethodExpressionListener(eventType);
         if (method != null) {
-            listener.setMethodExpression(method);
+            listener.setMethodExpression(method, method);
         }
         if (!MethodExpressionListener.addListener(listener, component)) {
-            throw new FaceletException("Failed to add listener to parent for type: " + eventType);
+            throw new FaceletException("Failed to add listener for type " + eventType + " to parent " + component);
         }
         return super.doStartTag();
     }

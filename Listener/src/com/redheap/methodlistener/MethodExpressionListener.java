@@ -1,10 +1,15 @@
 package com.redheap.methodlistener;
 
+import javax.el.ELContext;
 import javax.el.MethodExpression;
+import javax.el.MethodNotFoundException;
 
 import javax.faces.context.FacesContext;
+import javax.faces.event.AbortProcessingException;
 import javax.faces.event.FacesEvent;
 
+import oracle.adf.model.BindingContext;
+import oracle.adf.model.binding.DCBindingContainer;
 import oracle.adf.share.logging.ADFLogger;
 import oracle.adf.view.rich.event.BasePolytypeListener;
 
@@ -12,10 +17,16 @@ import org.apache.myfaces.trinidad.bean.FacesBean;
 import org.apache.myfaces.trinidad.bean.FacesBeanImpl;
 import org.apache.myfaces.trinidad.bean.PropertyKey;
 
+/**
+ * Faces event listener that can register with all ADF and JSF server-side faces events and executes a MethodExpression
+ * when executed.  The event type passed as a constructor parameter will determine what faces event the listener will
+ * act on. See {@link BasePolytypeListener} for a list of supported event types.
+ */
 public class MethodExpressionListener extends BasePolytypeListener {
 
     public static final FacesBean.Type TYPE = new FacesBean.Type();
-    public static final PropertyKey METHOD_KEY = TYPE.registerKey("method", MethodExpression.class);
+    public static final PropertyKey NOARG_METHOD_KEY = TYPE.registerKey("noarg-method", MethodExpression.class);
+    public static final PropertyKey ONEARG_METHOD_KEY = TYPE.registerKey("onearg-method", MethodExpression.class);
 
     private static final ADFLogger logger = ADFLogger.createADFLogger(MethodExpressionListener.class);
 
@@ -46,8 +57,9 @@ public class MethodExpressionListener extends BasePolytypeListener {
      * @param binding Tag EL binding
      * @throws IllegalArgumentException name is invalid for this state holder; supports 'from' or 'to'
      */
-    public void setMethodExpression(MethodExpression method) {
-        getFacesBean().setProperty(METHOD_KEY, method);
+    public void setMethodExpression(MethodExpression noArgMethod, MethodExpression oneArgMethod) {
+        getFacesBean().setProperty(NOARG_METHOD_KEY, noArgMethod);
+        getFacesBean().setProperty(ONEARG_METHOD_KEY, oneArgMethod);
     }
 
     /**
@@ -56,9 +68,9 @@ public class MethodExpressionListener extends BasePolytypeListener {
      * @param name "from" or "to"
      * @throws IllegalArgumentException name is invalid for this state holder; supports 'from' or 'to'
      */
-    public MethodExpression getMethodExpression() {
-        return (MethodExpression) getFacesBean().getProperty(METHOD_KEY);
-    }
+    //    public MethodExpression getMethodExpression() {
+    //        return (MethodExpression) getFacesBean().getProperty(METHOD_KEY);
+    //    }
 
     /**
      * Invoked from the super class with the event matches the target {@link BasePolytypeListener.EventType}.
@@ -66,13 +78,31 @@ public class MethodExpressionListener extends BasePolytypeListener {
      * @param event target faces event
      */
     @Override
-    protected void handleEvent(FacesEvent event) {
-        final MethodExpression expression = getMethodExpression();
+    protected void handleEvent(FacesEvent event) throws AbortProcessingException {
+        final ELContext elContext = FacesContext.getCurrentInstance().getELContext();
         try {
-            expression.invoke(FacesContext.getCurrentInstance().getELContext(), new Object[] { event });
+            try {
+                final MethodExpression oneArg = (MethodExpression) getFacesBean().getProperty(ONEARG_METHOD_KEY);
+                logger.fine("executing one argument " + oneArg.getExpressionString());
+                oneArg.invoke(elContext, new Object[] { event });
+            } catch (MethodNotFoundException e) {
+                // retry with no-argument expression, for example #{bindings.SomeMethod.execute}
+                final MethodExpression noArg = (MethodExpression) getFacesBean().getProperty(NOARG_METHOD_KEY);
+                logger.fine("executing no argument " + noArg.getExpressionString());
+                final DCBindingContainer bindings =
+                    (DCBindingContainer) BindingContext.getCurrent().getCurrentBindingsEntry();
+                final boolean exceptionsBeforeExec = bindings == null ? false : bindings.hasExceptions();
+                noArg.invoke(elContext, new Object[] { });
+                if (bindings != null && !exceptionsBeforeExec &&
+                    bindings.hasExceptions()) {
+                    // exception reporting to bindingContainer during execution
+                    throw new AbortProcessingException("exception reported to binding container",
+                                                       (Throwable) bindings.getExceptionsList().get(0));
+                }
+            }
         } catch (RuntimeException e) {
-            logger.warning("error invoking ActionListener " + expression.getExpressionString(), e);
-            throw e;
+            logger.warning("error invoking MethodExpressionListener", e);
+            throw e instanceof AbortProcessingException ? e : new AbortProcessingException(e);
         }
     }
 

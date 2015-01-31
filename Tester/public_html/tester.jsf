@@ -3,22 +3,64 @@
 <f:view xmlns:f="http://java.sun.com/jsf/core" xmlns:af="http://xmlns.oracle.com/adf/faces/rich"
         xmlns:rh="http://www.redheap.com/rh">
     <af:document title="tester.jsf" id="d1">
+        <af:messages id="m1"/>
         <af:form id="f1">
+            <af:button text="Failing setPropertyListener" id="b3">
+                <af:setPropertyListener from="xxx" to="#{backingBeanScope.myBean.failure}" type="action"/>
+                <af:setPropertyListener from="xxx" to="#{backingBeanScope.myBean.okay}"    type="action"/>
+            </af:button>
+            <af:button text="Failing methodExpressionListener" id="b4">
+                <rh:methodExpressionListener method="#{backingBeanScope.myBean.failureMethod}" type="action"/>
+                <rh:methodExpressionListener method="#{backingBeanScope.myBean.okayMethod}"    type="action"/>
+            </af:button>
             <af:button text="button 1" id="b1">
-                <rh:methodListener method="#{backingBeanScope.myBean.methodOne}" type="action"/>
-                <rh:methodListener method="#{backingBeanScope.myBean.methodTwo}" type="action"/>
-                <rh:methodListener method="#{backingBeanScope.myBean.methodThree}" type="action"/>
+                <!--<rh:methodExpressionListener method="#{backingBeanScope.myBean.methodOne}" type="popupFetch"/>-->
+                <rh:methodExpressionListener method="#{backingBeanScope.myBean.methodOne}" type="action"/>
+                <rh:methodExpressionListener method="#{backingBeanScope.myBean.methodTwo}" type="action"/>
+                <rh:methodExpressionListener method="#{backingBeanScope.myBean.methodThree}" type="action"/>
             </af:button>
             <af:button text="show dialog" id="b2">
                 <af:showPopupBehavior popupId="p1" triggerType="action"/>
             </af:button>
-            <af:popup id="p1">
+            <af:popup id="p1" contentDelivery="lazyUncached">
+                <rh:methodExpressionListener method="#{backingBeanScope.myBean.methodOne}" type="popupFetch"/>
                 <af:dialog id="d2" title="Dialog">
-                    <rh:methodListener method="#{backingBeanScope.myBean.methodOne}" type="dialog"/>
-                    <rh:methodListener method="#{backingBeanScope.myBean.methodTwo}" type="dialog"/>
+                    <rh:methodExpressionListener method="#{backingBeanScope.myBean.methodOne}" type="dialog"/>
+                    <rh:methodExpressionListener method="#{backingBeanScope.myBean.methodTwo}" type="dialog"/>
                     <af:outputText value="dialog" id="ot1"/>
                 </af:dialog>
             </af:popup>
+            <af:button actionListener="#{bindings.Delete.execute}" text="Delete" id="b5"/>
+            <af:button text="datacontrol stuff" id="b7">
+                <af:setPropertyListener from="one" to="#{backingBeanScope.myBean.someProperty}" type="action"/>
+                <rh:methodExpressionListener method="#{bindings.Delete.execute}" type="action"/>
+                <!-- delete fails but we still continue -->
+                <!--<rh:methodExpressionListener method="#{bindings.Create.execute}" type="action"/>-->
+                <!--<rh:methodExpressionListener method="#{bindings.Next.execute}" type="action"/>-->
+                <!--<rh:methodExpressionListener method="#{bindings.Next.execute}" type="action"/>-->
+                <!--<rh:methodExpressionListener method="#{bindings.Next.execute}" type="action"/>-->
+                <!--fails--><rh:methodExpressionListener method="#{bindings.doSomething.execute}" type="action"/>
+                <!-- doSomething fails, but failing DC operations are not detected to this continues -->
+                <af:setPropertyListener from="two" to="#{backingBeanScope.myBean.someProperty}" type="action"/>
+                <rh:methodExpressionListener method="#{backingBeanScope.myBean.letItFail}" type="action"/>
+                <!-- letItFail fails and aborts processing -->
+                <!--fails--><af:setPropertyListener from="three" to="#{backingBeanScope.myBean.someProperty}" type="action"/>
+                <rh:methodExpressionListener method="#{bindings.returnSomething.execute}" type="action"/>
+                <af:setPropertyListener from="four" to="#{backingBeanScope.myBean.someProperty}" type="action"/>
+            </af:button>
+            <af:button text="delete no row" id="b6">
+                <rh:methodExpressionListener method="#{bindings.Delete.execute}" type="action"/>
+            </af:button>
+            <af:button text="two listeners" id="b9" actionListener="#{bindings.returnSomething.execute}">
+                <!-- actionListener property executes last -->
+                <af:setPropertyListener from="four" to="#{backingBeanScope.myBean.someProperty}" type="action"/>
+            </af:button>
+            <af:button text="three properties" id="b8">
+                <af:setPropertyListener from="one" to="#{backingBeanScope.myBean.someProperty}" type="action"/>
+                <!--fails--><af:setPropertyListener from="three" to="#{backingBeanScope.myBean.someProperty}" type="action"/>
+                <!-- setPropertyListener aborts so this next one is not executed -->
+                <af:setPropertyListener from="two" to="#{backingBeanScope.myBean.someProperty}" type="action"/>
+            </af:button>
         </af:form>
     </af:document>
 </f:view>

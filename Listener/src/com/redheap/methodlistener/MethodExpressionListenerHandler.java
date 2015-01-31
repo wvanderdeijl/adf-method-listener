@@ -30,24 +30,25 @@ public class MethodExpressionListenerHandler extends TagHandler {
             if (parent == null) {
                 throw new FaceletException("ActionListener must be inside UIComponent tag");
             }
-            // build MethodExpression from "method" tag attribute. Should have no return value and accept a single
+            // build MethodExpression from "method" tag attribute. We don't care about return value and accept a single
             // FacesEvent argument (or more likely and event specific subtype of FacesEvent)
-            MethodExpression expression = method.getMethodExpression(faceletContext, Void.class, new Class[] {
-                                                                     FacesEvent.class });
+            MethodExpression singleArgExpression = method.getMethodExpression(faceletContext, null, new Class[] {
+                                                                              FacesEvent.class });
+            MethodExpression noArgExpression = method.getMethodExpression(faceletContext, null, new Class[]{});
 
             // try to determine type (aka. when to fire)
             String type = this.type.getValue();
             BasePolytypeListener.EventType eventType = MethodExpressionListener.findEventType(type);
             if (eventType == null) {
                 // the type is not valid, throw exception
-                throw new FaceletException("ActionListener has invalid type attribute");
+                throw new FaceletException("Unable to find FacesEvent for type attribute " + type);
             }
 
             // create the listener and add it to the parent component
             MethodExpressionListener listener = new MethodExpressionListener(eventType);
-            listener.setMethodExpression(expression);
+            listener.setMethodExpression(noArgExpression, singleArgExpression);
             if (!MethodExpressionListener.addListener(listener, parent)) {
-                throw new FaceletException("Failed to add listener to parent for type: " + eventType);
+                throw new FaceletException("Failed to add listener for type " + eventType + " to parent " + parent);
             }
         }
     }

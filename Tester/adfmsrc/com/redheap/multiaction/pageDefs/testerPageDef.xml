@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<pageDefinition xmlns="http://xmlns.oracle.com/adfm/uimodel" version="12.1.3.10.8" id="testerPageDef"
+                Package="com.redheap.multiaction.pageDefs">
+  <parameters/>
+  <executables>
+    <variableIterator id="variables"/>
+    <iterator Binds="root" RangeSize="25" DataControl="MyDataControl" id="MyDataControlIterator"/>
+    <accessorIterator MasterBinding="MyDataControlIterator" Binds="employees" RangeSize="25" DataControl="MyDataControl"
+                      BeanClass="com.redheap.multiaction.Employee" id="employeesIterator"/>
+  </executables>
+  <bindings>
+    <action IterBinding="employeesIterator" id="Create" RequiresUpdateModel="true" Action="createRow"/>
+    <action IterBinding="employeesIterator" id="Next" RequiresUpdateModel="true" Action="next"/>
+    <methodAction id="doSomething" RequiresUpdateModel="true" Action="invokeMethod" MethodName="doSomething"
+                  IsViewObjectMethod="false" DataControl="MyDataControl" InstanceName="data.MyDataControl.dataProvider">
+      <NamedData NDName="arg" NDValue="doSomething" NDType="java.lang.String"/>
+    </methodAction>
+    <methodAction id="returnSomething" RequiresUpdateModel="true" Action="invokeMethod" MethodName="returnSomething"
+                  IsViewObjectMethod="false" DataControl="MyDataControl" InstanceName="data.MyDataControl.dataProvider"
+                  ReturnName="data.MyDataControl.methodResults.returnSomething_MyDataControl_dataProvider_returnSomething_result">
+      <NamedData NDName="arg" NDValue="returnSomething" NDType="java.lang.String"/>
+    </methodAction>
+    <action IterBinding="employeesIterator" id="Delete" RequiresUpdateModel="false" Action="removeCurrentRow"/>
+  </bindings>
+</pageDefinition>
