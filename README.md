@@ -23,7 +23,7 @@ The methodExpressionListener can also be combined with the built-in ADF listener
 rh:methodExpressionListener can also execute operation binings from the page definition. This makes it possible to execute multiple ADFm actions:
 ```xml
 <af:button text="Multi ADFm" id="b2">
-  <!-- create new rol in a datacontrol collection -->
+  <!-- create new row in a datacontrol collection -->
   <rh:methodExpressionListener method="#{bindings.Create.execute}"      type="action"/>
   <!-- navigate to next row in a datacontrol collection -->
   <rh:methodExpressionListener method="#{bindings.Next.execute}"        type="action"/>
