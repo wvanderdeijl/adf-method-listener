@@ -46,4 +46,14 @@ Since MethodExpressionListener extends from [oracle.adf.view.rich.event.BasePoly
 Basically for `type=anyEvent` to work the JSF component the listener is trying to attach to has to have a `public void addAnyEventListener(AnyEventListener)` method. This is also a way to determine the appropriate value for the `type` attribute of the `rh:methodExpressionListener` tag. If the JSF component has a `public void addSomeOtherEventListener(SomeOtherEvent)` method, you know to use `type=someOther`
 
 ## Supported methods
-The expression from the `method` attribute has to point to a method accepting a single appropriate FacesEvent subclass or to a method accepting no argument as all, such as with `#{bindings.Create.execute}`. Due to issue #2 only single-argument methods are supported af the time
+The expression from the `method` attribute has to point to a method accepting a single appropriate FacesEvent subclass like `method="#{myBean.clickedButton}"` pointing to `public void clickedButton(ActionEvent event)` in MyBean. Alternatively it can also point to a method accepting no argument as all, such as with `#{bindings.Create.execute}`.
+
+## Exception handing
+rh:methodExpressionListener will throw a `javax.faces.event.AbortProcessingException` Whenever an exception occurs during execution of the MethodExpression which will abort any other pending listeners. This includes invocation of ADF Model methods that don't throw an exception themselves but report them to the BindingContainer. For example
+```xml
+<af:button text="Multi Action" id="b1">
+  <rh:methodExpressionListener method="#{bindings.Delete.execute}" type="action"/>
+  <rh:methodExpressionListener method="#{bindings.Commit.execute}" type="action"/>
+</af:button>
+```
+will not execute the Commit action if the Delete action failed and reported an exception to the BindingContainer, for example when no current row is available to delete.
