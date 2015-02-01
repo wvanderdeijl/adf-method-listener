@@ -48,6 +48,9 @@
                 <rh:methodExpressionListener method="#{bindings.returnSomething.execute}" type="action"/>
                 <af:setPropertyListener from="four" to="#{backingBeanScope.myBean.someProperty}" type="action"/>
             </af:button>
+            <af:button text="let it fail" id="b10">
+                <rh:methodExpressionListener method="#{backingBeanScope.myBean.letItFail}" type="action"/>
+            </af:button>
             <af:button text="delete no row" id="b6">
                 <rh:methodExpressionListener method="#{bindings.Delete.execute}" type="action"/>
             </af:button>

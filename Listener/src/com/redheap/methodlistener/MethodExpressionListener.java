@@ -1,5 +1,7 @@
 package com.redheap.methodlistener;
 
+import java.util.List;
+
 import javax.el.ELContext;
 import javax.el.MethodExpression;
 import javax.el.MethodNotFoundException;
@@ -78,32 +80,54 @@ public class MethodExpressionListener extends BasePolytypeListener {
      * @param event target faces event
      */
     @Override
-    protected void handleEvent(FacesEvent event) throws AbortProcessingException {
-        final ELContext elContext = FacesContext.getCurrentInstance().getELContext();
+    protected void handleEvent(final FacesEvent event) throws AbortProcessingException {
+        int numExceptionsBefore = getBindingContainerExceptionCount();
         try {
-            try {
-                final MethodExpression oneArg = (MethodExpression) getFacesBean().getProperty(ONEARG_METHOD_KEY);
-                logger.fine("executing one argument " + oneArg.getExpressionString());
-                oneArg.invoke(elContext, new Object[] { event });
-            } catch (MethodNotFoundException e) {
-                // retry with no-argument expression, for example #{bindings.SomeMethod.execute}
-                final MethodExpression noArg = (MethodExpression) getFacesBean().getProperty(NOARG_METHOD_KEY);
-                logger.fine("executing no argument " + noArg.getExpressionString());
-                final DCBindingContainer bindings =
-                    (DCBindingContainer) BindingContext.getCurrent().getCurrentBindingsEntry();
-                final boolean exceptionsBeforeExec = bindings == null ? false : bindings.hasExceptions();
-                noArg.invoke(elContext, new Object[] { });
-                if (bindings != null && !exceptionsBeforeExec &&
-                    bindings.hasExceptions()) {
-                    // exception reporting to bindingContainer during execution
-                    throw new AbortProcessingException("exception reported to binding container",
-                                                       (Throwable) bindings.getExceptionsList().get(0));
-                }
+            if (!executeOneArgExpression(event)) {
+                // methodExpression doesn't seem to be for a single-arg method, retry no-arg version
+                executeNoArgExpression(event);
             }
         } catch (RuntimeException e) {
-            logger.warning("error invoking MethodExpressionListener", e);
             throw e instanceof AbortProcessingException ? e : new AbortProcessingException(e);
         }
+        if (getBindingContainerExceptionCount() >
+            numExceptionsBefore) {
+            // TODO: make this behavior configurable (looking for binding errors)
+            // exception reported to bindingContainer during execution
+            final DCBindingContainer bindings =
+                (DCBindingContainer) BindingContext.getCurrent().getCurrentBindingsEntry();
+            final List exceptions = bindings.getExceptionsList();
+            final Throwable lastException = (Throwable) exceptions.get(exceptions.size() - 1);
+            throw new AbortProcessingException("exception reported to binding container", lastException);
+        }
+    }
+
+    private boolean executeOneArgExpression(final FacesEvent event) {
+        final ELContext elContext = FacesContext.getCurrentInstance().getELContext();
+        try {
+            final MethodExpression oneArg = (MethodExpression) getFacesBean().getProperty(ONEARG_METHOD_KEY);
+            logger.fine("executing one argument " + oneArg.getExpressionString());
+            oneArg.invoke(elContext, new Object[] { event });
+            return true;
+        } catch (MethodNotFoundException e) {
+            return false;
+        }
+    }
+
+    private void executeNoArgExpression(final FacesEvent event) {
+        final ELContext elContext = FacesContext.getCurrentInstance().getELContext();
+        final MethodExpression expression = (MethodExpression) getFacesBean().getProperty(NOARG_METHOD_KEY);
+        logger.fine("executing no-argument " + expression.getExpressionString());
+        expression.invoke(elContext, new Object[] { });
+    }
+
+    private int getBindingContainerExceptionCount() {
+        final DCBindingContainer bindings = (DCBindingContainer) BindingContext.getCurrent().getCurrentBindingsEntry();
+        if (bindings == null) {
+            return 0;
+        }
+        List exceptions = bindings.getExceptionsList();
+        return exceptions == null ? 0 : exceptions.size();
     }
 
     /**
