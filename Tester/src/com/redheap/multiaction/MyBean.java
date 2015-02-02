@@ -1,44 +1,64 @@
 package com.redheap.multiaction;
 
-import javax.faces.component.UIComponent;
-import javax.faces.event.FacesEvent;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+import javax.faces.event.AbortProcessingException;
+import javax.faces.event.ActionEvent;
+
+import oracle.adf.view.rich.event.DialogEvent;
+import oracle.adf.view.rich.event.PopupFetchEvent;
 
 public class MyBean {
-
-    private UIComponent inputText;
-
-    public void methodOne(FacesEvent event) {
-        System.out.println(getClass().getName() + ".ONE: " + event);
-    }
-
-    public void methodTwo(FacesEvent event) {
-        System.out.println(getClass().getName() + ".TWO: " + event);
-    }
-
-    public void methodThree(FacesEvent event) {
-        System.out.println(getClass().getName() + ".THREE: " + event);
-    }
-
-    public void letItFail(FacesEvent event) {
-        System.out.println(getClass().getName() + ".FAILING: " + event);
-        throw new RuntimeException("not doing this");
-    }
-
-    public void setSomeProperty(String s) {
-        System.out.println("setSomeProperty: " + s);
-        if ("three".equals(s)) {
-            throw new RuntimeException("three is a crowd");
-        }
-    }
 
     private String failure;
     private String okay;
 
+    public void okayActionListener(ActionEvent event) {
+        System.out.println("okayActionListener " + event);
+    }
+
+    public void anotherOkayActionListener(ActionEvent event) {
+        System.out.println("anotherOkayActionListener " + event);
+    }
+
+    public void failureActionListener(ActionEvent event) {
+        System.out.println("failureActionListener " + event);
+        throw new RuntimeException("always throwing exception in failureActionListener");
+    }
+
+    public void silentFailureActionListener(ActionEvent event) throws AbortProcessingException {
+        System.out.println("silentFailureActionListener " + event);
+        throw new AbortProcessingException("always throwing exception in silentFailureActionListener");
+    }
+
+    public void silentFailureAndMessageActionListener(ActionEvent event) throws AbortProcessingException {
+        System.out.println("silentFailureAndMessageActionListener " + event);
+        FacesContext.getCurrentInstance().addMessage(null,
+                                                     new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error",
+                                                                      "Some error message"));
+        throw new AbortProcessingException("always throwing exception in silentFailureAndMessageActionListener");
+    }
+
+    public void popupFetchedOne(PopupFetchEvent event) {
+        System.out.println("popupFetchedOne " + event);
+    }
+
+    public void popupFetchedTwo(PopupFetchEvent event) {
+        System.out.println("popupFetchedTwo " + event);
+    }
+
+    public void dialogOne(DialogEvent event) {
+        System.out.println("dialogOne " + event);
+    }
+
+    public void dialogTwo(DialogEvent event) {
+        System.out.println("dialogOne " + event);
+    }
 
     public void setFailure(String failure) {
         System.out.println("setFailure " + failure);
         this.failure = failure;
-        throw new RuntimeException("not doing this");
+        throw new RuntimeException("always throwing exception in setFailure");
     }
 
     public String getFailure() {
@@ -54,12 +74,4 @@ public class MyBean {
         return okay;
     }
 
-    public void failureMethod(FacesEvent event) {
-        System.out.println("failureMethod " + event);
-        throw new RuntimeException("not doing this");
-    }
-
-    public void okayMethod(FacesEvent event) {
-        System.out.println("okayMethod " + event);
-    }
 }

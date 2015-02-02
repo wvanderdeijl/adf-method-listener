@@ -26,7 +26,8 @@ import org.apache.myfaces.trinidad.bean.PropertyKey;
  */
 public class MethodExpressionListener extends BasePolytypeListener {
 
-    public static final FacesBean.Type TYPE = new FacesBean.Type();
+    private static final FacesBean.Type TYPE = new FacesBean.Type();
+
     public static final PropertyKey NOARG_METHOD_KEY = TYPE.registerKey("noarg-method", MethodExpression.class);
     public static final PropertyKey ONEARG_METHOD_KEY = TYPE.registerKey("onearg-method", MethodExpression.class);
 
@@ -70,9 +71,9 @@ public class MethodExpressionListener extends BasePolytypeListener {
      * @param name "from" or "to"
      * @throws IllegalArgumentException name is invalid for this state holder; supports 'from' or 'to'
      */
-    //    public MethodExpression getMethodExpression() {
-    //        return (MethodExpression) getFacesBean().getProperty(METHOD_KEY);
-    //    }
+    //        public String getMethodExpressionString() {
+    //            return (MethodExpression) getFacesBean().getProperty(METHOD_KEY);
+    //        }
 
     /**
      * Invoked from the super class with the event matches the target {@link BasePolytypeListener.EventType}.
@@ -82,20 +83,21 @@ public class MethodExpressionListener extends BasePolytypeListener {
     @Override
     protected void handleEvent(final FacesEvent event) throws AbortProcessingException {
         int numExceptionsBefore = getBindingContainerExceptionCount();
-        try {
-            if (!executeOneArgExpression(event)) {
-                // methodExpression doesn't seem to be for a single-arg method, retry no-arg version
-                executeNoArgExpression(event);
+        if (!executeOneArgExpression(event)) {
+            // methodExpression doesn't seem to be for a single-arg method, retry no-arg version
+            if (!executeNoArgExpression()) {
+                final MethodExpression expression = (MethodExpression) getFacesBean().getProperty(ONEARG_METHOD_KEY);
+                throw new MethodNotFoundException(expression.getExpressionString() +
+                                                  " not resolving to no-arg method or method accepting a single " +
+                                                  getEventType().getEventClass().getName());
             }
-        } catch (RuntimeException e) {
-            throw e instanceof AbortProcessingException ? e : new AbortProcessingException(e);
         }
         if (getBindingContainerExceptionCount() >
             numExceptionsBefore) {
-            // TODO: make this behavior configurable (looking for binding errors)
             // exception reported to bindingContainer during execution
+            // TODO: make this behavior configurable (looking for binding errors)
             final DCBindingContainer bindings =
-                (DCBindingContainer) BindingContext.getCurrent().getCurrentBindingsEntry();
+                              (DCBindingContainer) BindingContext.getCurrent().getCurrentBindingsEntry();
             final List exceptions = bindings.getExceptionsList();
             final Throwable lastException = (Throwable) exceptions.get(exceptions.size() - 1);
             throw new AbortProcessingException("exception reported to binding container", lastException);
@@ -105,20 +107,25 @@ public class MethodExpressionListener extends BasePolytypeListener {
     private boolean executeOneArgExpression(final FacesEvent event) {
         final ELContext elContext = FacesContext.getCurrentInstance().getELContext();
         try {
-            final MethodExpression oneArg = (MethodExpression) getFacesBean().getProperty(ONEARG_METHOD_KEY);
-            logger.fine("executing one argument " + oneArg.getExpressionString());
-            oneArg.invoke(elContext, new Object[] { event });
+            final MethodExpression expression = (MethodExpression) getFacesBean().getProperty(ONEARG_METHOD_KEY);
+            logger.fine("executing one argument " + expression.getExpressionString());
+            expression.invoke(elContext, new Object[] { event });
             return true;
         } catch (MethodNotFoundException e) {
             return false;
         }
     }
 
-    private void executeNoArgExpression(final FacesEvent event) {
+    private boolean executeNoArgExpression() {
         final ELContext elContext = FacesContext.getCurrentInstance().getELContext();
-        final MethodExpression expression = (MethodExpression) getFacesBean().getProperty(NOARG_METHOD_KEY);
-        logger.fine("executing no-argument " + expression.getExpressionString());
-        expression.invoke(elContext, new Object[] { });
+        try {
+            final MethodExpression expression = (MethodExpression) getFacesBean().getProperty(NOARG_METHOD_KEY);
+            logger.fine("executing no-argument " + expression.getExpressionString());
+            expression.invoke(elContext, new Object[] { });
+            return true;
+        } catch (MethodNotFoundException e) {
+            return false;
+        }
     }
 
     private int getBindingContainerExceptionCount() {

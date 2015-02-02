@@ -4,7 +4,6 @@ import javax.el.ELException;
 import javax.el.MethodExpression;
 
 import javax.faces.component.UIComponent;
-import javax.faces.event.FacesEvent;
 import javax.faces.view.facelets.FaceletContext;
 import javax.faces.view.facelets.FaceletException;
 import javax.faces.view.facelets.TagAttribute;
@@ -30,12 +29,6 @@ public class MethodExpressionListenerHandler extends TagHandler {
             if (parent == null) {
                 throw new FaceletException("ActionListener must be inside UIComponent tag");
             }
-            // build MethodExpression from "method" tag attribute. We don't care about return value and accept a single
-            // FacesEvent argument (or more likely and event specific subtype of FacesEvent)
-            MethodExpression singleArgExpression = method.getMethodExpression(faceletContext, null, new Class[] {
-                                                                              FacesEvent.class });
-            MethodExpression noArgExpression = method.getMethodExpression(faceletContext, null, new Class[]{});
-
             // try to determine type (aka. when to fire)
             String type = this.type.getValue();
             BasePolytypeListener.EventType eventType = MethodExpressionListener.findEventType(type);
@@ -43,6 +36,12 @@ public class MethodExpressionListenerHandler extends TagHandler {
                 // the type is not valid, throw exception
                 throw new FaceletException("Unable to find FacesEvent for type attribute " + type);
             }
+
+            // build MethodExpression from "method" tag attribute. We don't care about return value and accept a single
+            // FacesEvent argument (or more likely and event specific subtype of FacesEvent)
+            MethodExpression singleArgExpression = method.getMethodExpression(faceletContext, null, new Class[] {
+                                                                              eventType.getEventClass() });
+            MethodExpression noArgExpression = method.getMethodExpression(faceletContext, null, new Class[] { });
 
             // create the listener and add it to the parent component
             MethodExpressionListener listener = new MethodExpressionListener(eventType);
