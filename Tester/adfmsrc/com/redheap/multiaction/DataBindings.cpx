@@ -3,9 +3,11 @@
              SeparateXMLFiles="false" Package="com.redheap.multiaction" ClientType="Generic">
   <pageMap>
     <page path="/tester.jsf" usageId="com_redheap_multiaction_testerPageDef"/>
+    <page path="/tester-jsp.jspx" usageId="com_redheap_multiaction_tester_jspPageDef"/>
   </pageMap>
   <pageDefinitionUsages>
     <page id="com_redheap_multiaction_testerPageDef" path="com.redheap.multiaction.pageDefs.testerPageDef"/>
+    <page id="com_redheap_multiaction_tester_jspPageDef" path="com.redheap.multiaction.pageDefs.tester_jspPageDef"/>
   </pageDefinitionUsages>
   <dataControlUsages>
     <dc id="MyDataControl" path="com.redheap.multiaction.MyDataControl"/>

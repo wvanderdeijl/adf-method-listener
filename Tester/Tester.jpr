@@ -285,6 +285,10 @@
             <value n="id" v="ADF Faces Databinding Runtime"/>
             <value n="isJDK" v="false"/>
          </hash>
+         <hash>
+            <value n="id" v="method-listener.jar1"/>
+            <value n="isJDK" v="false"/>
+         </hash>
       </list>
       <hash n="internalDefinitions">
          <list n="libraryDefinitions">
@@ -295,6 +299,14 @@
                <value n="deployedByDefault" v="true"/>
                <value n="description" v="method-listener.jar"/>
                <value n="id" v="method-listener.jar"/>
+            </hash>
+            <hash>
+               <list n="classPath">
+                  <url path="../Listener/deploy/method-listener.jar" jar-entry=""/>
+               </list>
+               <value n="deployedByDefault" v="true"/>
+               <value n="description" v="method-listener.jar1"/>
+               <value n="id" v="method-listener.jar1"/>
             </hash>
          </list>
       </hash>
@@ -393,6 +405,10 @@
          </hash>
          <hash>
             <value n="id" v="ADF Faces Databinding Runtime"/>
+            <value n="isJDK" v="false"/>
+         </hash>
+         <hash>
+            <value n="id" v="method-listener.jar1"/>
             <value n="isJDK" v="false"/>
          </hash>
       </list>
@@ -581,6 +597,30 @@
             <value n="tldURL" v="@oracle.home@../oracle_common/modules/oracle.adf.view_12.1.3/dvt-faces.jar!/META-INF/bi.tld"/>
             <value n="URI" v="http://xmlns.oracle.com/dss/adf/faces"/>
             <value n="version" v="1.1"/>
+         </hash>
+         <hash>
+            <value n="jspVersion" v="2.1"/>
+            <value n="libraries" v="method-listener.jar1"/>
+            <value n="name" v="RedHeap"/>
+            <value n="prefix" v="rh"/>
+            <value n="runInEditor" v="false"/>
+            <value n="showInPalette" v="true"/>
+            <value n="tldURL" v="@project@../Listener/deploy/method-listener.jar!/META-INF/rh.tld"/>
+            <value n="URI" v="http://www.redheap.com/rh"/>
+            <value n="version" v="1.0"/>
+         </hash>
+      </list>
+      <list n="tag-libraries-internalDefinitions">
+         <hash>
+            <value n="jspVersion" v="2.1"/>
+            <value n="libraries" v="method-listener.jar1"/>
+            <value n="name" v="RedHeap"/>
+            <value n="prefix" v="rh"/>
+            <value n="runInEditor" v="false"/>
+            <value n="showInPalette" v="true"/>
+            <value n="tldURL" v="@project@../Listener/deploy/method-listener.jar!/META-INF/rh.tld"/>
+            <value n="URI" v="http://www.redheap.com/rh"/>
+            <value n="version" v="1.0"/>
          </hash>
       </list>
    </hash>
