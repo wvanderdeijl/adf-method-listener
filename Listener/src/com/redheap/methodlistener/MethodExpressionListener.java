@@ -15,8 +15,6 @@ import oracle.adf.model.binding.DCBindingContainer;
 import oracle.adf.share.logging.ADFLogger;
 import oracle.adf.view.rich.event.BasePolytypeListener;
 
-import org.apache.myfaces.trinidad.bean.FacesBean;
-import org.apache.myfaces.trinidad.bean.FacesBeanImpl;
 import org.apache.myfaces.trinidad.bean.PropertyKey;
 
 /**
@@ -43,15 +41,11 @@ import org.apache.myfaces.trinidad.bean.PropertyKey;
  */
 public class MethodExpressionListener extends BasePolytypeListener {
 
-    private static final FacesBean.Type TYPE = new FacesBean.Type();
-
-    public static final PropertyKey NOARG_METHOD_KEY = TYPE.registerKey("noarg-method", MethodExpression.class);
-    public static final PropertyKey ONEARG_METHOD_KEY = TYPE.registerKey("onearg-method", MethodExpression.class);
+    // property keys to store propertys in internal FacesBean that takes care of state saving and restore
+    private static final PropertyKey NOARG_METHOD_KEY = PropertyKey.createPropertyKey("noarg-method");
+    private static final PropertyKey ONEARG_METHOD_KEY = PropertyKey.createPropertyKey("onearg-method");
 
     private static final ADFLogger logger = ADFLogger.createADFLogger(MethodExpressionListener.class);
-
-    // Listener state holder with support for saveState and restoreState
-    private FacesBean bean;
 
     /**
      * The no-args constructor default type is {@link BasePolytypeListener.EventType#ACTION}.
@@ -152,22 +146,6 @@ public class MethodExpressionListener extends BasePolytypeListener {
         }
         List exceptions = bindings.getExceptionsList();
         return exceptions == null ? 0 : exceptions.size();
-    }
-
-    /**
-     * @return the state holder for the stateful listener
-     */
-    @Override
-    protected FacesBean getFacesBean() {
-        if (bean == null) {
-            bean = new FacesBeanImpl() {
-                @Override
-                public FacesBean.Type getType() {
-                    return TYPE;
-                }
-            };
-        }
-        return bean;
     }
 
     /**
