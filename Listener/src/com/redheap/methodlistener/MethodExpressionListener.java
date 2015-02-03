@@ -22,7 +22,24 @@ import org.apache.myfaces.trinidad.bean.PropertyKey;
 /**
  * Faces event listener that can register with all ADF and JSF server-side faces events and executes a MethodExpression
  * when executed.  The event type passed as a constructor parameter will determine what faces event the listener will
- * act on. See {@link BasePolytypeListener} for a list of supported event types.
+ * act on. See {@link BasePolytypeListener} for a list of supported event types.<p>
+ * The MethodExpression specified in the {@code method} attribute should either accept no arguments at all or a
+ * single argument of the correct event type. This event type argument is the name of the {@code type} attribute
+ * with {@code Event} appended. For example @{code type="action"} would require a listener accepting a
+ * {@code ActionEvent}
+ * <p>
+ * Since this JSF tag is a child of the component it is attaching to, it allows for multiple listeners to attach
+ * to the same component. This is something that is not possible with the normal {@code actionListener} or other
+ * listener attributes on the component itself.
+ * <p>
+ * Example usages:<br>
+ * {@code <af:button><rh:methodExpressionListener type="action" method="#{myBean.clicked}"/></af:button>} <br>
+ * {@code <af:button><rh:methodExpressionListener type="action" method="#{bindings.Commit.execute}"/></af:button>} <br>
+ * {@code <af:dialog><rh:methodExpressionListener type="dialog" method="#{myBean.dialogListener}"/></af:dialog>}
+ * <p>
+ * This code is inspired by oracle.adf.view.rich.event.SetPropertyListener,
+ * oracle.adfinternal.view.faces.facelets.rich.SetPropertyListenerHandler and
+ * oracle.adfinternal.view.faces.taglib.listener.SetPropertyListenerTag
  */
 public class MethodExpressionListener extends BasePolytypeListener {
 
