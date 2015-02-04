@@ -13,7 +13,6 @@ import javax.faces.event.FacesEvent;
 
 import oracle.adf.model.BindingContext;
 import oracle.adf.model.binding.DCBindingContainer;
-import oracle.adf.share.logging.ADFLogger;
 import oracle.adf.view.rich.event.BasePolytypeListener;
 
 import org.apache.myfaces.trinidad.bean.PropertyKey;
@@ -42,11 +41,9 @@ import org.apache.myfaces.trinidad.bean.PropertyKey;
  */
 public class MethodExpressionListener extends BasePolytypeListener {
 
-    // property keys to store propertys in internal FacesBean that takes care of state saving and restore
+    // property keys to store properties in internal FacesBean that takes care of state saving and restore
     private static final PropertyKey NOARG_METHOD_KEY = PropertyKey.createPropertyKey("noarg-method");
     private static final PropertyKey ONEARG_METHOD_KEY = PropertyKey.createPropertyKey("onearg-method");
-
-    private static final ADFLogger logger = ADFLogger.createADFLogger(MethodExpressionListener.class);
 
     /**
      * The no-args constructor default type is {@link BasePolytypeListener.EventType#ACTION}.
@@ -108,20 +105,27 @@ public class MethodExpressionListener extends BasePolytypeListener {
 
     /**
      * Invoked from the super class with the event matches the target {@link BasePolytypeListener.EventType}.
-     * Delegates event handling to the methodExpression supplied to {@link #setMethodExpression}
+     * Delegates event handling to the methodExpression supplied to {@link #setSingleArgumentMethodExpression}.
+     * If that expression is not given or does not resolve to an existing method, this will retry to delegate
+     * to the no-argument method supplied to {@link #setNoArgumentMethodExpression}. This means the same expression
+     * can be supplied to both setters if the caller does not know to which type of method the expression will
+     * resolve. This handleEvent method will simply try to execute both.
      * @param event target faces event
      * @throws AbortProcessingException
      */
     @Override
     protected void handleEvent(final FacesEvent event) throws AbortProcessingException {
         int numExceptionsBefore = getBindingContainerExceptions().size();
-        if (!executeOneArgExpression(event)) {
+        final MethodExpression singleArgExpr = getSingleArgumentMethodExpression();
+        final MethodExpression noArgExpr = getNoArgumentMethodExpression();
+        if (singleArgExpr == null && noArgExpr == null) {
+            throw new IllegalArgumentException("rf:methodExpressionListner method attribute unknown");
+        }
+        if (!execute(singleArgExpr, event)) {
             // methodExpression doesn't seem to be for a single-arg method, retry no-arg version
-            if (!executeNoArgExpression()) {
-                final MethodExpression expression = (MethodExpression) getFacesBean().getProperty(ONEARG_METHOD_KEY);
-                throw new MethodNotFoundException(expression.getExpressionString() +
-                                                  " not resolving to no-arg method or method accepting a single " +
-                                                  getEventType().getEventClass().getName());
+            if (!execute(noArgExpr)) {
+                // both expressions null or not resolving to existing methods
+                throw new MethodNotFoundException(buildExceptionMessage(singleArgExpr, noArgExpr));
             }
         }
         List postExceptions = getBindingContainerExceptions();
@@ -133,37 +137,53 @@ public class MethodExpressionListener extends BasePolytypeListener {
         }
     }
 
-    private boolean executeOneArgExpression(final FacesEvent event) {
+    /**
+     * Execute a given MethodExpression.
+     * @param expression MethodExpression to execute
+     * @param args arguments to supply to the executing methodexpression
+     * @return {@code false} when given expression is null or when it throws a MethodNotFoundException, {@code true}
+     * if execution succeeded
+     * @throws RuntimeException when any other exception than MethodNotFoundException was thrown by the methodexpression
+     */
+    private boolean execute(final MethodExpression expression, Object... args) {
         final ELContext elContext = FacesContext.getCurrentInstance().getELContext();
         try {
-            final MethodExpression expression = getSingleArgumentMethodExpression();
             if (expression == null) {
-                return true;
+                return false;
             }
-            logger.fine("executing one argument " + expression.getExpressionString());
-            expression.invoke(elContext, new Object[] { event });
+            expression.invoke(elContext, args);
             return true;
         } catch (MethodNotFoundException e) {
             return false;
         }
     }
 
-    private boolean executeNoArgExpression() {
-        final ELContext elContext = FacesContext.getCurrentInstance().getELContext();
-        try {
-            final MethodExpression expression = getNoArgumentMethodExpression();
-            if (expression == null) {
-                return true;
-            }
-            logger.fine("executing no-argument " + expression.getExpressionString());
-            expression.invoke(elContext, new Object[] { });
-            return true;
-        } catch (MethodNotFoundException e) {
-            return false;
+    /**
+     * Build message for exception to throw when both single-argument and no-argument methodExpression were null
+     * or pointed to non-existing method (aks threw MethodNotFoundException)
+     * @param singleArgExpr single-argument MethodExpression which could be {@code null}
+     * @param noArgExpr no-argument MethodExpression which could be {@code null}
+     * @return error message explaining which of the two (or both) resolved to non-existing methods or empty
+     * string if both methodExpressions were null.
+     */
+    private String buildExceptionMessage(final MethodExpression singleArgExpr, final MethodExpression noArgExpr) {
+        StringBuilder msg = new StringBuilder();
+        if (singleArgExpr != null) {
+            msg.append(singleArgExpr.getExpressionString()).append(" not resolving to single ");
+            msg.append(getEventType().getEventClass().getName()).append(" argument method");
         }
+        if (noArgExpr != null) {
+            msg.append(msg.length() > 0 ? " and " : "");
+            msg.append(noArgExpr.getExpressionString()).append(" not resolving to no-argument method");
+        }
+        return msg.toString();
     }
 
-    private List getBindingContainerExceptions() {
+    /**
+     * Get the list of exceptions for the binding container.
+     * @return list of exceptions, which could be empty, but never {@code null}
+     */
+    private List<?> getBindingContainerExceptions() {
         final DCBindingContainer bindings = (DCBindingContainer) BindingContext.getCurrent().getCurrentBindingsEntry();
         if (bindings == null) {
             return Collections.emptyList();
@@ -180,7 +200,7 @@ public class MethodExpressionListener extends BasePolytypeListener {
      */
     public static BasePolytypeListener.EventType findEventType(String mnemonic) {
         if (mnemonic == null) {
-            throw new IllegalArgumentException("mnemonic cannot be null");
+            return null;
         }
         for (BasePolytypeListener.EventType t : BasePolytypeListener.EventType.values()) {
             if (t.getMnemonic().equals(mnemonic)) {
