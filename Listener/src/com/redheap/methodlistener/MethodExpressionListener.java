@@ -1,5 +1,6 @@
 package com.redheap.methodlistener;
 
+import java.util.Collections;
 import java.util.List;
 
 import javax.el.ELContext;
@@ -49,14 +50,15 @@ public class MethodExpressionListener extends BasePolytypeListener {
 
     /**
      * The no-args constructor default type is {@link BasePolytypeListener.EventType#ACTION}.
+     * Can be used to programmatically construct a MethodExpressionListener to add to a component.
      */
     public MethodExpressionListener() {
         super(BasePolytypeListener.EventType.ACTION);
     }
 
     /**
-     * Constructor requires an enumeration of {@link BasePolytypeListener.EventType} that defines
-     * what associated event this particular instance handles.
+     * Constructor requires a {@link BasePolytypeListener.EventType} that defines what associated event this particular
+     * instance handles.
      * @param eventType framework concrete event
      * @throws IllegalArgumentException eventType cannot be null
      */
@@ -65,35 +67,54 @@ public class MethodExpressionListener extends BasePolytypeListener {
     }
 
     /**
-     * Sets the "from" or "to" property via a value expression.
-     *
-     * @param name "from" or "to"
-     * @param binding Tag EL binding
-     * @throws IllegalArgumentException name is invalid for this state holder; supports 'from' or 'to'
+     * Set the MethodExpression without arguments to execute when firing the listener.
+     * @param expression a MethodExpression that requires no arguments. The return type doesn't matter and could
+     * have been set to {@code null} to indicate this.
+     * @see #handleEvent
      */
-    public void setMethodExpression(MethodExpression noArgMethod, MethodExpression oneArgMethod) {
-        getFacesBean().setProperty(NOARG_METHOD_KEY, noArgMethod);
-        getFacesBean().setProperty(ONEARG_METHOD_KEY, oneArgMethod);
+    public void setNoArgumentMethodExpression(MethodExpression expression) {
+        getFacesBean().setProperty(NOARG_METHOD_KEY, expression);
     }
 
     /**
-     * Gets the "from" or "to" property as a value expression.
-     *
-     * @param name "from" or "to"
-     * @throws IllegalArgumentException name is invalid for this state holder; supports 'from' or 'to'
+     * Gets the no-argument MethodExpression.
+     * @return MethodExpression as set by {@link #setNoArgumentMethodExpression} or {@code null}
      */
-    //        public String getMethodExpressionString() {
-    //            return (MethodExpression) getFacesBean().getProperty(METHOD_KEY);
-    //        }
+    public MethodExpression getNoArgumentMethodExpression() {
+        return (MethodExpression) getFacesBean().getProperty(NOARG_METHOD_KEY);
+    }
+
+    /**
+     * Set the MethodExpression with a single argument to execute when firing the listener.
+     * @param expression a MethodExpression that requires a single argument. This argument type has to be equal to
+     * the type associated with the {@code type} attribute. For example, {@code type="action"} requires a
+     * MethodExpression that accepts a {@code ActionEvent} argument and {@code type="popupFetch"} requires a
+     * MethodExpression accepting a single {@code PopupFetchEvent} argument. The return type doesn't matter and could
+     * have been set to {@code null} to indicate this.
+     * @see #handleEvent
+     * @see BasePolytypeListener.EventType#getEventClass
+     */
+    public void setSingleArgumentMethodExpression(MethodExpression expression) {
+        getFacesBean().setProperty(ONEARG_METHOD_KEY, expression);
+    }
+
+    /**
+     * Gets the single-argument MethodExpression.
+     * @return MethodExpression as set by {@link #setSingleArgumentMethodExpression} or {@code null}
+     */
+    public MethodExpression getSingleArgumentMethodExpression() {
+        return (MethodExpression) getFacesBean().getProperty(ONEARG_METHOD_KEY);
+    }
 
     /**
      * Invoked from the super class with the event matches the target {@link BasePolytypeListener.EventType}.
      * Delegates event handling to the methodExpression supplied to {@link #setMethodExpression}
      * @param event target faces event
+     * @throws AbortProcessingException
      */
     @Override
     protected void handleEvent(final FacesEvent event) throws AbortProcessingException {
-        int numExceptionsBefore = getBindingContainerExceptionCount();
+        int numExceptionsBefore = getBindingContainerExceptions().size();
         if (!executeOneArgExpression(event)) {
             // methodExpression doesn't seem to be for a single-arg method, retry no-arg version
             if (!executeNoArgExpression()) {
@@ -103,14 +124,11 @@ public class MethodExpressionListener extends BasePolytypeListener {
                                                   getEventType().getEventClass().getName());
             }
         }
-        if (getBindingContainerExceptionCount() >
-            numExceptionsBefore) {
+        List postExceptions = getBindingContainerExceptions();
+        if (postExceptions.size() > numExceptionsBefore) {
             // exception reported to bindingContainer during execution
             // TODO: make this behavior configurable (looking for binding errors)
-            final DCBindingContainer bindings =
-                              (DCBindingContainer) BindingContext.getCurrent().getCurrentBindingsEntry();
-            final List exceptions = bindings.getExceptionsList();
-            final Throwable lastException = (Throwable) exceptions.get(exceptions.size() - 1);
+            final Throwable lastException = (Throwable) postExceptions.get(postExceptions.size() - 1);
             throw new AbortProcessingException("exception reported to binding container", lastException);
         }
     }
@@ -118,7 +136,10 @@ public class MethodExpressionListener extends BasePolytypeListener {
     private boolean executeOneArgExpression(final FacesEvent event) {
         final ELContext elContext = FacesContext.getCurrentInstance().getELContext();
         try {
-            final MethodExpression expression = (MethodExpression) getFacesBean().getProperty(ONEARG_METHOD_KEY);
+            final MethodExpression expression = getSingleArgumentMethodExpression();
+            if (expression == null) {
+                return true;
+            }
             logger.fine("executing one argument " + expression.getExpressionString());
             expression.invoke(elContext, new Object[] { event });
             return true;
@@ -130,7 +151,10 @@ public class MethodExpressionListener extends BasePolytypeListener {
     private boolean executeNoArgExpression() {
         final ELContext elContext = FacesContext.getCurrentInstance().getELContext();
         try {
-            final MethodExpression expression = (MethodExpression) getFacesBean().getProperty(NOARG_METHOD_KEY);
+            final MethodExpression expression = getNoArgumentMethodExpression();
+            if (expression == null) {
+                return true;
+            }
             logger.fine("executing no-argument " + expression.getExpressionString());
             expression.invoke(elContext, new Object[] { });
             return true;
@@ -139,20 +163,20 @@ public class MethodExpressionListener extends BasePolytypeListener {
         }
     }
 
-    private int getBindingContainerExceptionCount() {
+    private List getBindingContainerExceptions() {
         final DCBindingContainer bindings = (DCBindingContainer) BindingContext.getCurrent().getCurrentBindingsEntry();
         if (bindings == null) {
-            return 0;
+            return Collections.emptyList();
         }
         List exceptions = bindings.getExceptionsList();
-        return exceptions == null ? 0 : exceptions.size();
+        return exceptions == null ? Collections.emptyList() : exceptions;
     }
 
     /**
      * Attempts to find an {@link BasePolytypeListener.EventType} that matches the
      * {@link BasePolytypeListener.EventType#getMnemonic}.
-     * @param mnemonic stylized event name
-     * @return matching enumeration or <code>null</code>
+     * @param mnemonic stylized event name, for exampele {@code action} or {@code popupFetch}
+     * @return matching enum or {@code null}
      */
     public static BasePolytypeListener.EventType findEventType(String mnemonic) {
         if (mnemonic == null) {

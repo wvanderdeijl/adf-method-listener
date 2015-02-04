@@ -45,7 +45,8 @@ public class MethodExpressionListenerHandler extends TagHandler {
 
             // create the listener and add it to the parent component
             MethodExpressionListener listener = new MethodExpressionListener(eventType);
-            listener.setMethodExpression(noArgExpression, singleArgExpression);
+            listener.setSingleArgumentMethodExpression(singleArgExpression);
+            listener.setNoArgumentMethodExpression(noArgExpression);
             if (!MethodExpressionListener.addListener(listener, parent)) {
                 throw new FaceletException("Failed to add listener for type " + eventType + " to parent " + parent);
             }

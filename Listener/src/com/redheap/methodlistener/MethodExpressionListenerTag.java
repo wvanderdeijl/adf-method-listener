@@ -7,6 +7,7 @@ import javax.faces.component.UIComponent;
 import javax.faces.view.facelets.FaceletException;
 import javax.faces.webapp.UIComponentClassicTagBase;
 
+import javax.servlet.ServletContext;
 import javax.servlet.jsp.JspApplicationContext;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspFactory;
@@ -54,16 +55,17 @@ public class MethodExpressionListenerTag extends TrinidadTagSupport {
         MethodExpressionListener listener = new MethodExpressionListener(eventType);
         if (method != null) {
             // TODO: cleanup
-            JspApplicationContext applicationContext =
-                JspFactory.getDefaultFactory().getJspApplicationContext(this.pageContext.getServletContext());
-            ExpressionFactory expressionFactory = applicationContext.getExpressionFactory();
+            final ServletContext servletCtx = this.pageContext.getServletContext();
+            final JspApplicationContext appCtx = JspFactory.getDefaultFactory().getJspApplicationContext(servletCtx);
+            ExpressionFactory expressionFactory = appCtx.getExpressionFactory();
             MethodExpression noArgs =
                 expressionFactory.createMethodExpression(this.pageContext.getELContext(), method.getExpressionString(),
                                                          null, new Class[] { });
             MethodExpression oneArg =
                 expressionFactory.createMethodExpression(this.pageContext.getELContext(), method.getExpressionString(),
                                                          null, new Class[] { eventType.getEventClass() });
-            listener.setMethodExpression(noArgs, oneArg);
+            listener.setNoArgumentMethodExpression(noArgs);
+            listener.setSingleArgumentMethodExpression(oneArg);
         }
         if (!MethodExpressionListener.addListener(listener, component)) {
             throw new FaceletException("Failed to add listener for type " + eventType + " to parent " + component);
