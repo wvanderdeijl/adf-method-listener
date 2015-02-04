@@ -59,3 +59,9 @@ It will also throw this AbortProcessingException if it invokes an ADF Model meth
 </af:button>
 ```
 will not execute the Commit action if the Delete action failed and reported an exception to the BindingContainer, for example when no current row is available to delete.
+
+# Usage
+* Download the latest release JAR from https://github.com/wvanderdeijl/adf-method-listener/releases
+* In the consuming application go to Project Properties, then Facelet Tag Libraries. Click the Add button and make sure to select the `Project` folder in the popup. Then press the New button and browse to the method-listener.jar.
+* When not using Facelets, but JSP pages the steps are similar but use JSP Tag Libraries in the project properties
+* This will not only add the JAR file to your project libraries but also register the Facelet tag library
