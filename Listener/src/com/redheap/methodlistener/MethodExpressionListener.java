@@ -35,6 +35,10 @@ import org.apache.myfaces.trinidad.bean.PropertyKey;
  * {@code <af:button><rh:methodExpressionListener type="action" method="#{bindings.Commit.execute}"/></af:button>} <br>
  * {@code <af:dialog><rh:methodExpressionListener type="dialog" method="#{myBean.dialogListener}"/></af:dialog>}
  * <p>
+ * During event execution this listener checks if the number of exceptions reported to the binding layer increases.
+ * If so, it will throw an AbortProcessingException to signal JSF to abort processing any other listeners.
+ * See oracle.adf.model.binding.DCBindingContainer.getExceptionsList.
+ * <p>
  * This code is inspired by oracle.adf.view.rich.event.SetPropertyListener,
  * oracle.adfinternal.view.faces.facelets.rich.SetPropertyListenerHandler and
  * oracle.adfinternal.view.faces.taglib.listener.SetPropertyListenerTag
